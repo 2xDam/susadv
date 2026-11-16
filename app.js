@@ -3,11 +3,12 @@
   const WAIT = LAST - 1;      // Wartefeld vor dem Ziel
   const COLS = 5;
   const DAYS = 24;
-  const KEY = "susadv-v1";
+  const KEY = "susadv-v2";
   const TEST = new URLSearchParams(location.search).has("test");
 
   const $ = (id) => document.getElementById(id);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const d6 = () => 1 + Math.floor(Math.random() * 6);
 
   // ---------- Felder ----------
   const SPECIALS = [
@@ -17,19 +18,30 @@
   ];
 
   const fields = [];
-  let r = 0, t = 0, s = 0;
+  let t = 0, s = 0;
   for (let i = 0; i <= LAST; i++) {
     if (i === 0) fields.push({ type: "start", icon: "🏠" });
-    else if (i === LAST) fields.push({ type: "goal", icon: "🎄", title: "Heiligabend", text: CONTENT.goal });
+    else if (i === LAST) fields.push({ type: "goal", icon: "🎄", title: "JACKPOT!", text: CONTENT.goal });
     else if (i === WAIT) fields.push({ type: "wait", icon: "🔥", title: "Am Kamin", text: "Du bist fast da. Hier wärmst du dich auf, bis an Heiligabend dein letzter Wurf dich zum Baum bringt." });
     else if (i % 6 === 0) fields.push({ type: "special", ...SPECIALS[s++ % SPECIALS.length] });
-    else if (i % 6 === 2 || i % 6 === 5) fields.push({ type: "reward", icon: "🎁", title: "Geschenk", text: CONTENT.rewards[r++ % CONTENT.rewards.length] });
+    else if (i % 6 === 2 || i % 6 === 5) fields.push({ type: "reward", icon: "🎁", title: "Gutschein" });
     else if (i % 6 === 3) fields.push({ type: "task", icon: "⭐", title: "Aufgabe", text: CONTENT.tasks[t++ % CONTENT.tasks.length] });
     else fields.push({ type: "plain", icon: "❄️" });
   }
 
+  // Meilensteine gleichmäßig verteilen, jeweils auf das nächstgelegene Ruhefeld
+  const BIG = CONTENT.bigGifts.length;
+  for (let k = 1; k <= BIG; k++) {
+    const ideal = (k * WAIT) / (BIG + 1);
+    let best = -1;
+    fields.forEach((f, i) => {
+      if (f.type === "plain" && (best < 0 || Math.abs(i - ideal) < Math.abs(best - ideal))) best = i;
+    });
+    if (best > 0) fields[best] = { type: "milestone", icon: "🎀", title: "Großes Geschenk!" };
+  }
+
   // ---------- Spielstand ----------
-  const fresh = () => ({ pos: 0, rolls: 0, bonus: 0, seen: [0], sack: [] });
+  const fresh = () => ({ pos: 0, rolls: 0, bonus: 0, seen: [0], sack: [], big: 0, got: [], bag: [], onceWon: [] });
   let state = fresh();
   try { state = { ...fresh(), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch (e) { /* ohne Speicher spielbar */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignorieren */ } };
@@ -41,6 +53,22 @@
     return now.getMonth() === 11 ? Math.min(now.getDate(), DAYS) : 0;
   }
   const rollsLeft = () => Math.max(0, openDays() - state.rolls) + state.bonus;
+
+  // Gutschein ziehen: gemischter Stapel, damit sich nicht ständig dasselbe wiederholt
+  function drawVoucher() {
+    const usable = (i) => CONTENT.vouchers[i] && !(CONTENT.vouchers[i].once && state.onceWon.includes(i));
+    state.bag = state.bag.filter(usable);
+    if (!state.bag.length) {
+      state.bag = CONTENT.vouchers.map((_, i) => i).filter(usable);
+      for (let i = state.bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [state.bag[i], state.bag[j]] = [state.bag[j], state.bag[i]];
+      }
+    }
+    const idx = state.bag.pop();
+    if (CONTENT.vouchers[idx].once) state.onceWon.push(idx);
+    return CONTENT.vouchers[idx];
+  }
 
   // ---------- Brett aufbauen ----------
   const board = $("board"), token = $("token");
@@ -56,23 +84,119 @@
     el.style.gridRow = row + 1;
     el.style.gridColumn = (ltr ? col : COLS - 1 - col) + 1;
     if (i < LAST) el.classList.add(col === COLS - 1 ? "to-down" : ltr ? "to-right" : "to-left");
-    el.innerHTML = `<span class="num">${i === 0 ? "Start" : i === LAST ? "Ziel" : i}</span>${f.icon}`;
+    el.innerHTML = `<span class="num">${i === 0 ? "Start" : i === LAST ? "Jackpot" : i}</span>${f.icon}`;
     board.appendChild(el);
     cells.push(el);
   });
+  cells[LAST].onclick = () => { if (state.pos === LAST || TEST) sardines(); };
 
   function placeToken() {
     const c = cells[state.pos];
     token.style.transform = `translate(${c.offsetLeft}px, ${c.offsetTop}px)`;
   }
 
-  // ---------- Anzeige ----------
+  // ---------- Würfel ----------
   const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
-  function showDie(n) {
-    [...$("die").children].forEach((p, i) => p.classList.toggle("on", PIPS[n].includes(i)));
-    $("die").setAttribute("aria-label", `Würfel zeigt ${n}`);
+  function showDie(die, n) {
+    die.classList.toggle("fish", n === "fish");
+    [...die.children].forEach((p, i) => p.classList.toggle("on", n !== "fish" && PIPS[n].includes(i)));
+    die.setAttribute("aria-label", n === "fish" ? "Würfel zeigt einen Fisch" : `Würfel zeigt ${n}`);
+  }
+  // Großer 3D-Würfel: springt aus seinem Platz in die Bildschirmmitte, taumelt,
+  // prallt zweimal auf, bleibt mit dem Ergebnis nach vorn liegen und kehrt zurück.
+  const stage = $("diceStage"), cubeWrap = $("cubeWrap"), cube = $("cube"), cubeShadow = $("cubeShadow");
+  const cubeTilt = cubeWrap.firstElementChild, diceSay = $("diceSay");
+  for (let n = 1; n <= 6; n++) {
+    const face = document.createElement("div");
+    face.className = `face f${n}`;
+    for (let i = 0; i < 9; i++) {
+      const pip = document.createElement("i");
+      if (PIPS[n].includes(i)) pip.className = "on";
+      face.appendChild(pip);
+    }
+    cube.appendChild(face);
+  }
+  // Drehung, die die jeweilige Seite nach vorn bringt: [um X, um Y]
+  const FACING = { 1: [0, 0], 2: [-90, 0], 3: [0, -90], 4: [0, 90], 5: [90, 0], 6: [0, 180] };
+
+  async function throwDie(src, result, grand = false) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      showDie(src, result);
+      await sleep(500);
+      return;
+    }
+    cube.classList.toggle("jackpot", result === "fish");
+    (card.open ? card : document.body).appendChild(stage);   // im Dialog liegt er über der Karte
+
+    // Start- und Endpunkt: der kleine Würfel, aus dem er herausspringt
+    const r = src.getBoundingClientRect();
+    const dx = r.left + r.width / 2 - innerWidth / 2;
+    const dy = r.top + r.height / 2 - innerHeight / 2;
+    const s0 = r.width / cubeWrap.offsetWidth;
+    const H = innerHeight;
+    const at = (x, y, sc) => `translate3d(${x}px, ${y}px, 0) scale3d(${sc}, ${sc}, ${sc})`;
+    const up = "cubic-bezier(.2,.7,.4,1)", down = "cubic-bezier(.6,0,.9,.45)";
+    const duration = grand ? 5200 : 3000;
+
+    src.classList.add("away");
+    stage.classList.add("on");
+
+    const [fx, fy] = FACING[result === "fish" ? 1 : result];
+    const rnd = () => Math.random() * 360;
+    const end = `rotateX(${fx + (grand ? 5 : 3) * 360}deg) rotateY(${fy + (grand ? 4 : 2) * 360}deg) rotateZ(0deg)`;
+    cube.animate([
+      { transform: `rotateX(${rnd()}deg) rotateY(${rnd()}deg) rotateZ(${rnd() - 180}deg)`, easing: "cubic-bezier(.1,.5,.2,1)" },
+      { transform: end, offset: 0.93 },
+      { transform: end },
+    ], { duration, fill: "forwards" });
+
+    const flight = cubeWrap.animate([
+      { offset: 0, transform: at(dx, dy, s0), easing: up },
+      { offset: 0.3, transform: at(dx * 0.15, -0.17 * H, 1.25), easing: down },
+      { offset: 0.5, transform: at(0, 0, 1), easing: up },
+      { offset: 0.63, transform: at(0, -0.07 * H, 1.06), easing: down },
+      { offset: 0.76, transform: at(0, 0, 1), easing: up },
+      { offset: 0.84, transform: at(0, -0.02 * H, 1.02), easing: down },
+      { offset: 0.92, transform: at(0, 0, 1) },
+      { offset: 1, transform: at(0, 0, 1) },
+    ], { duration, fill: "forwards" });
+
+    const sh = (o, sc) => ({ opacity: o, transform: `scale(${sc})` });
+    cubeShadow.animate([
+      { offset: 0, ...sh(0, 0.4), easing: up },
+      { offset: 0.3, ...sh(0.18, 0.55), easing: down },
+      { offset: 0.5, ...sh(0.6, 1), easing: up },
+      { offset: 0.63, ...sh(0.35, 0.8), easing: down },
+      { offset: 0.76, ...sh(0.6, 1), easing: up },
+      { offset: 0.84, ...sh(0.5, 0.93), easing: down },
+      { offset: 0.92, ...sh(0.6, 1) },
+      { offset: 1, ...sh(0.6, 1) },
+    ], { duration, fill: "forwards" });
+
+    await flight.finished;
+    // Würfel dreht sich dem Betrachter zu, darunter steht das Ergebnis
+    cubeTilt.classList.add("settled");
+    diceSay.textContent = result === "fish" ? "Moment mal … ein Fisch?" : `Eine ${result}!`;
+    diceSay.classList.add("on");
+    await sleep(grand ? 2400 : 1500);   // Ergebnis wirken lassen
+    diceSay.classList.remove("on");
+
+    showDie(src, result);
+    stage.classList.remove("on");
+    const back = cubeWrap.animate(
+      [{ transform: at(0, 0, 1) }, { transform: at(dx, dy, s0) }],
+      { duration: 650, easing: "cubic-bezier(.5,0,.8,.4)", fill: "forwards" });
+    cubeShadow.animate([sh(0.6, 1), sh(0, 0.4)], { duration: 300, fill: "forwards" });
+    await back.finished;
+
+    cubeTilt.classList.remove("settled");
+    src.classList.remove("away");
+    src.classList.remove("pop"); void src.offsetWidth; src.classList.add("pop");
+    [...cube.getAnimations(), ...cubeWrap.getAnimations(), ...cubeShadow.getAnimations()].forEach((a) => a.cancel());
   }
 
+  // ---------- Anzeige ----------
+  const SACK_ICON = { voucher: "🎁", big: "🎀", wait: "💋" };
   let busy = false;
   function render() {
     cells.forEach((c, i) => {
@@ -87,6 +211,7 @@
 
     let hint;
     if (state.pos === LAST) hint = "Frohe Weihnachten! 🎄";
+    else if (state.rolls === DAYS - 1 && open === DAYS && state.bonus === 0) hint = "Heiligabend. Heute ist alles möglich …";
     else if (left > 0) hint = left === 1 ? "Dein Wurf für heute wartet." : `${left} Würfe warten auf dich.`;
     else if (open === 0) {
       const dec1 = new Date(now.getFullYear(), 11, 1);
@@ -98,11 +223,13 @@
 
     const list = $("sackList");
     list.innerHTML = "";
-    $("sackHint").hidden = state.sack.length > 0 && state.sack.every((g) => g.done);
-    state.sack.forEach((g, i) => {
+    $("sackHint").textContent = state.sack.length
+      ? "Tippe ein Geschenk an, sobald du es eingelöst hast."
+      : "Noch leer. Gewonnene Geschenke landen hier.";
+    state.sack.forEach((g) => {
       const li = document.createElement("li");
       li.className = g.done ? "done" : "";
-      li.innerHTML = `<button><span class="gift">${g.done ? "✅" : "🎁"}</span><span class="txt"></span><span class="state">${g.done ? "eingelöst" : "offen"}</span></button>`;
+      li.innerHTML = `<button><span class="gift">${g.done ? "✅" : SACK_ICON[g.kind] || "🎁"}</span><span class="txt"></span><span class="state">${g.done ? "eingelöst" : "offen"}</span></button>`;
       li.querySelector(".txt").textContent = g.text;
       li.querySelector("button").onclick = () => { g.done = !g.done; save(); render(); };
       list.prepend(li);
@@ -111,47 +238,162 @@
   }
 
   // ---------- Karte ----------
-  const KIND = { reward: "Geschenk", task: "Aufgabe", special: "Ereignis", wait: "Fast geschafft", goal: "Ziel erreicht" };
-  function showCard(f, okLabel) {
-    const card = $("card");
+  const KIND = { reward: "Gutschein", task: "Aufgabe", special: "Ereignis", milestone: "Meilenstein", wait: "Fast geschafft", goal: "Heiligabend" };
+  const card = $("card"), cardDie = $("cardDie");
+  let cardAction = null;   // solange gesetzt, führt der Knopf eine Aktion aus statt zu schließen
+  let typing = null;       // läuft gerade die Schreibmaschine?
+  const okBtn = $("cardOk"), cardText = $("cardText");
+
+  // Text Buchstabe für Buchstabe aufbauen, als würde ihn jemand live tippen.
+  // Ein Tipp auf die Karte schreibt den Rest sofort hin.
+  function typeText(text) {
+    const chars = Array.from(text);
+    const out = document.createElement("span");
+    const caret = document.createElement("span");
+    caret.className = "caret";
+    cardText.replaceChildren(out, caret);
+    okBtn.classList.add("waiting");
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) chars.length = 0, out.textContent = text;
+
+    return new Promise((res) => {
+      let i = 0, timer;
+      const done = () => {
+        clearTimeout(timer);
+        out.textContent = text;
+        typing = null;
+        setTimeout(() => caret.remove(), 900);
+        okBtn.classList.remove("waiting");
+        res();
+      };
+      const next = () => {
+        if (i >= chars.length) return done();
+        const c = chars[i++];
+        out.textContent += c;
+        const pause = /[.!?]/.test(c) ? 420 : /[,:;–]/.test(c) ? 240 : c === " " ? 90 : 0;
+        timer = setTimeout(next, 55 + Math.random() * 55 + pause);
+      };
+      typing = { skip: done };
+      timer = setTimeout(next, 650);   // kurz warten, bis die Karte aufgeklappt ist
+    });
+  }
+
+  function openCard(f, okLabel) {
     card.className = `card ${f.type}`;
     $("cardIcon").textContent = f.icon;
     $("cardKind").textContent = KIND[f.type] || "";
     $("cardTitle").textContent = f.title;
-    $("cardText").textContent = f.text;
-    $("cardOk").textContent = okLabel || "Weiter";
+    okBtn.textContent = okLabel || "Weiter";
+    cardDie.hidden = true;
     card.showModal();
-    return new Promise((res) => card.addEventListener("close", res, { once: true }));
+    const closed = new Promise((res) => { closeResolver = res; });
+    closed.typed = typeText(f.text);
+    return closed;
   }
-  $("cardOk").onclick = () => $("card").close();
+
+  // Selbst schließen und Bescheid geben, statt sich auf das "close"-Ereignis
+  // zu verlassen (das feuert nicht in jedem Browser zuverlässig)
+  let closeResolver = null;
+  function closeCard() {
+    if (card.open) card.close();
+    const res = closeResolver;
+    closeResolver = null;
+    if (res) res();
+  }
+  // Nur reagieren, wenn die Karte wirklich zu ist: Das Ereignis kann verspätet
+  // eintreffen, wenn schon die nächste Karte offen ist.
+  card.addEventListener("close", () => { if (!card.open) closeCard(); });
+  card.addEventListener("click", () => { if (typing) typing.skip(); });
+  okBtn.onclick = (e) => {
+    if (typing) return;                 // der Klick überspringt nur das Tippen
+    e.stopPropagation();
+    cardAction ? cardAction() : closeCard();
+  };
+  card.addEventListener("cancel", (e) => {
+    e.preventDefault();
+    if (typing) typing.skip();
+    else if (!cardAction) closeCard();
+  });
+
+  // Gutschein mit Würfel: erst würfeln, dann wandert er in den Sack
+  function voucherCard(v) {
+    const closed = openCard({ type: "reward", icon: "🎁", title: "Gutschein", text: v.text.replace("{n}", "?") }, "Würfeln 🎲");
+    showDie(cardDie, 1);
+    closed.typed.then(() => {
+      cardText.insertAdjacentHTML("beforeend", `<small>Jedes Auge zählt ${v.dice}.</small>`);
+      cardDie.hidden = false;
+    });
+    return new Promise((res) => {
+      cardAction = async () => {
+        cardAction = () => {};
+        okBtn.classList.add("waiting");
+        const n = d6();
+        await throwDie(cardDie, n);
+        await sleep(350);
+        const text = v.text.replace("{n}", n * v.dice);
+        okBtn.textContent = "In den Gabensack";
+        await typeText(text);
+        cardAction = null;
+        state.sack.push({ text, done: false, kind: "voucher" });
+        save(); render();
+        closed.then(res);
+      };
+    });
+  }
 
   // ---------- Bewegung ----------
+  const passed = [];   // Meilensteine, an denen sie beim letzten Zug vorbeigekommen ist
   async function walk(target) {
     const dir = target > state.pos ? 1 : -1;
     while (state.pos !== target) {
       state.pos += dir;
       if (!state.seen.includes(state.pos)) state.seen.push(state.pos);
+      if (fields[state.pos].type === "milestone" && !state.got.includes(state.pos)) passed.push(state.pos);
       token.classList.remove("hop"); void token.offsetWidth; token.classList.add("hop");
       placeToken();
       cells[state.pos].scrollIntoView({ block: "center", behavior: "smooth" });
-      await sleep(240);
+      await sleep(460);
     }
+  }
+
+  async function claimMilestones() {
+    while (passed.length) {
+      const pos = passed.shift();
+      if (state.got.includes(pos)) continue;
+      state.got.push(pos);
+      const text = CONTENT.bigGifts[state.big++] || "Ein Überraschungsgeschenk";
+      state.sack.push({ text, done: false, kind: "big" });
+      save(); render();
+      await openCard({ type: "milestone", icon: "🎀", title: "Großes Geschenk!", text }, "In den Gabensack");
+    }
+  }
+
+  async function move(target) {
+    await walk(target);
+    await claimMilestones();
   }
 
   async function land(allowMove) {
     const f = fields[state.pos];
     if (f.type === "reward") {
-      state.sack.push({ text: f.text, done: false });
-      save(); render();
-      await showCard(f, "In den Gabensack");
+      const v = drawVoucher();
+      if (v.dice) await voucherCard(v);
+      else {
+        state.sack.push({ text: v.text, done: false, kind: "voucher" });
+        save(); render();
+        await openCard({ ...f, text: v.text }, "In den Gabensack");
+      }
     } else if (f.type === "task") {
-      await showCard(f, "Erledigt!");
+      await openCard(f, "Erledigt!");
     } else if (f.type === "special" && allowMove) {
-      await showCard(f);
+      await openCard(f);
       if (f.reroll) state.bonus++;
-      if (f.move) { await walk(state.pos + f.move); await land(false); }
-    } else if (f.type === "wait" || f.type === "goal") {
-      await showCard(f, f.type === "goal" ? "Juhu!" : "Weiter");
+      if (f.move) { await move(state.pos + f.move); await land(false); }
+    } else if (f.type === "wait") {
+      await openCard(f);
+    } else if (f.type === "goal") {
+      sardines();
+      await sleep(3500);
+      await openCard(f, "Juhu!");
     }
   }
 
@@ -162,29 +404,68 @@
     const usesBonus = state.bonus > 0;
     if (usesBonus) state.bonus--; else state.rolls++;
     const finale = !usesBonus && state.rolls === DAYS;   // letzter Wurf an Heiligabend
-    const n = 1 + Math.floor(Math.random() * 6);
+    const n = d6();
 
-    $("die").classList.add("rolling");
-    for (let i = 0; i < 6; i++) { showDie(1 + Math.floor(Math.random() * 6)); await sleep(80); }
-    showDie(n);
-    $("die").classList.remove("rolling");
+    await throwDie($("die"), finale ? "fish" : n, finale);
     await sleep(350);
 
     if (finale) {
-      await walk(LAST);
+      await move(LAST);
       await land(false);
     } else if (state.pos === WAIT) {
       const text = CONTENT.waiting[Math.floor(Math.random() * CONTENT.waiting.length)];
-      state.sack.push({ text, done: false });
-      await showCard({ type: "reward", icon: "💋", title: "Trostpreis am Kamin", text }, "In den Gabensack");
+      state.sack.push({ text, done: false, kind: "wait" });
+      await openCard({ type: "reward", icon: "💋", title: "Trostpreis am Kamin", text }, "In den Gabensack");
     } else {
-      await walk(Math.min(state.pos + n, WAIT));
+      await move(Math.min(state.pos + n, WAIT));
       await land(true);
     }
 
     save();
     busy = false; render();
   }
+
+  // ---------- Sardinen-Jackpot ----------
+  const sea = $("sea");
+  function sardines() {
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (sea.showPopover && !sea.matches(":popover-open")) sea.showPopover();
+    const schools = calm ? 2 : 5;
+    let longest = 0;
+    for (let sc = 0; sc < schools; sc++) {
+      const rtl = sc % 2 === 1;
+      const y = 8 + Math.random() * 76;
+      const start = sc * 2 + Math.random() * 0.6;
+      const size = 44 + Math.random() * 26;
+      const count = calm ? 6 : 11 + Math.floor(Math.random() * 5);
+      for (let k = 0; k < count; k++) {
+        const fish = document.createElement("div");
+        fish.className = "sardine" + (rtl ? " rtl" : "");
+        const dur = (calm ? 16 : 10) + Math.random() * 2.5;
+        const delay = start + Math.random() * 1.8;
+        fish.style.top = `${y + (Math.random() - 0.5) * 16}vh`;
+        fish.style.width = `${size * (0.8 + Math.random() * 0.4)}px`;
+        fish.style.animationDuration = `${dur}s`;
+        fish.style.animationDelay = `${delay}s`;
+        fish.innerHTML = `<svg viewBox="0 0 100 40" style="animation-delay:-${Math.random() * 2}s"><use href="#sardine"/></svg>`;
+        fish.addEventListener("animationend", (e) => { if (e.target === fish) fish.remove(); });
+        sea.appendChild(fish);
+        longest = Math.max(longest, dur + delay);
+      }
+    }
+    clearTimeout(sardines.timer);
+    sardines.timer = setTimeout(() => {
+      sea.replaceChildren();
+      if (sea.hidePopover && sea.matches(":popover-open")) sea.hidePopover();
+    }, longest * 1000 + 300);
+  }
+
+  // Popover liegt über der Karte; ohne Popover-Unterstützung genügt der z-index
+  function liftSea() {
+    if (sea.showPopover && sea.matches(":popover-open")) { sea.hidePopover(); sea.showPopover(); }
+  }
+  card.addEventListener("toggle", liftSea);
+  new MutationObserver(() => { if (card.open) liftSea(); }).observe(card, { attributes: true, attributeFilter: ["open"] });
 
   // ---------- Schnee ----------
   function snow() {
@@ -206,11 +487,13 @@
   // ---------- Start ----------
   $("roll").onclick = roll;
   if (TEST) {
-    $("reset").hidden = false;
+    $("testTools").hidden = false;
     $("reset").onclick = () => { state = fresh(); save(); render(); scrollTo({ top: 0 }); };
+    $("testFish").onclick = sardines;
   }
   addEventListener("resize", placeToken);
-  showDie(5);
+  showDie($("die"), state.pos === LAST ? "fish" : 5);
+  showDie(cardDie, 1);
   snow();
   render();
   if (document.fonts) document.fonts.ready.then(placeToken);
