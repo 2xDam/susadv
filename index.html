@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d241b">
+  <meta name="robots" content="noindex">
+  <title>Adventsspiel</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="snow" id="snow" aria-hidden="true"></div>
+
+  <header class="hero">
+    <div class="garland" aria-hidden="true"></div>
+    <p class="eyebrow">Dein Begleiter zum Adventskalender</p>
+    <h1 id="title">Adventsspiel</h1>
+    <p class="lead" id="lead">Jeden Tag ein Wurf. Sammle Geschenke, meistere Aufgaben und erreiche an Heiligabend den Baum.</p>
+  </header>
+
+  <section class="status" aria-label="Spielstand">
+    <div class="chip"><span class="chip-label">Heute</span><strong id="statDay">–</strong></div>
+    <div class="chip"><span class="chip-label">Würfe übrig</span><strong id="statRolls">0</strong></div>
+    <div class="chip"><span class="chip-label">Feld</span><strong id="statPos">0</strong></div>
+  </section>
+
+  <main>
+    <section class="board-wrap" aria-label="Spielbrett">
+      <div class="board" id="board">
+        <div class="token" id="token" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="legend" aria-label="Legende">
+      <span><i class="dot reward"></i>Geschenk</span>
+      <span><i class="dot task"></i>Aufgabe</span>
+      <span><i class="dot special"></i>Ereignis</span>
+      <span><i class="dot plain"></i>Ruhefeld</span>
+    </section>
+
+    <section class="sack" aria-labelledby="sackTitle">
+      <h2 id="sackTitle">Dein Gabensack</h2>
+      <p class="hint" id="sackHint">Noch leer. Gewonnene Geschenke landen hier. Tippe ein Geschenk an, sobald du es eingelöst hast.</p>
+      <ul id="sackList"></ul>
+    </section>
+
+    <button class="reset" id="reset" hidden>Spielstand zurücksetzen (Testmodus)</button>
+  </main>
+
+  <div class="dock">
+    <div class="die" id="die" aria-live="polite" aria-label="Würfel">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="dock-text">
+      <button class="roll" id="roll">Würfeln</button>
+      <p id="dockHint"></p>
+    </div>
+  </div>
+
+  <dialog class="card" id="card">
+    <div class="card-icon" id="cardIcon"></div>
+    <p class="card-kind" id="cardKind"></p>
+    <h3 id="cardTitle"></h3>
+    <p id="cardText"></p>
+    <button id="cardOk">Weiter</button>
+  </dialog>
+
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
