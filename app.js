@@ -40,8 +40,16 @@
     if (best > 0) fields[best] = { type: "milestone", icon: "🎀", title: "Großes Geschenk!" };
   }
 
+  // Katzenfotos gleichmäßig auf die übrigen Ruhefelder legen
+  const cats = CONTENT.catPhotos || [];
+  const rest = fields.map((f, i) => (f.type === "plain" ? i : -1)).filter((i) => i > 0);
+  cats.slice(0, rest.length).forEach((p, k) => {
+    const i = rest[Math.floor(((k + 0.5) * rest.length) / Math.min(cats.length, rest.length))];
+    fields[i] = { type: "cat", icon: "🐾", title: "Katzenpost 🐾", text: p.text, src: p.src };
+  });
+
   // ---------- Spielstand ----------
-  const fresh = () => ({ pos: 0, rolls: 0, bonus: 0, seen: [0], sack: [], big: 0, got: [], bag: [], onceWon: [] });
+  const fresh = () => ({ pos: 0, rolls: 0, bonus: 0, seen: [0], sack: [], big: 0, got: [], bag: [], onceWon: [], photo: 0 });
   let state = fresh();
   try { state = { ...fresh(), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch (e) { /* ohne Speicher spielbar */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignorieren */ } };
@@ -73,7 +81,11 @@
   // ---------- Brett aufbauen ----------
   const board = $("board"), token = $("token");
   const cells = [];
-  token.innerHTML = `<span>${CONTENT.token}</span>`;
+  if (CONTENT.token === "prinzessin") {
+    token.innerHTML = `<span><svg viewBox="0 0 60 82"><use href="#princess"/></svg></span>`;
+    token.style.setProperty("--hair", CONTENT.princess.hair);
+    token.style.setProperty("--dress", CONTENT.princess.dress);
+  } else token.innerHTML = `<span>${CONTENT.token}</span>`;
   $("title").textContent = CONTENT.title;
   document.title = CONTENT.title;
 
@@ -84,7 +96,8 @@
     el.style.gridRow = row + 1;
     el.style.gridColumn = (ltr ? col : COLS - 1 - col) + 1;
     if (i < LAST) el.classList.add(col === COLS - 1 ? "to-down" : ltr ? "to-right" : "to-left");
-    el.innerHTML = `<span class="num">${i === 0 ? "Start" : i === LAST ? "Jackpot" : i}</span>${f.icon}`;
+    const face = f.type === "cat" ? `<img class="thumb" src="${f.src.replace("photos/", "photos/thumbs/")}" alt="">` : f.icon;
+    el.innerHTML = `${face}<span class="num">${i === 0 ? "Start" : i === LAST ? "Jackpot" : i}</span>`;
     board.appendChild(el);
     cells.push(el);
   });
@@ -238,7 +251,7 @@
   }
 
   // ---------- Karte ----------
-  const KIND = { reward: "Gutschein", task: "Aufgabe", special: "Ereignis", milestone: "Meilenstein", wait: "Fast geschafft", goal: "Heiligabend" };
+  const KIND = { reward: "Gutschein", task: "Aufgabe", special: "Ereignis", milestone: "Meilenstein", wait: "Fast geschafft", goal: "Heiligabend", photo: "Erinnerung" };
   const card = $("card"), cardDie = $("cardDie");
   let cardAction = null;   // solange gesetzt, führt der Knopf eine Aktion aus statt zu schließen
   let typing = null;       // läuft gerade die Schreibmaschine?
@@ -284,6 +297,9 @@
     $("cardTitle").textContent = f.title;
     okBtn.textContent = okLabel || "Weiter";
     cardDie.hidden = true;
+    const photo = $("cardPhoto");
+    photo.hidden = !f.src;
+    if (f.src) photo.src = f.src; else photo.removeAttribute("src");
     card.showModal();
     const closed = new Promise((res) => { closeResolver = res; });
     closed.typed = typeText(f.text);
@@ -372,9 +388,21 @@
     await claimMilestones();
   }
 
+  // Nächstes Foto aus einer Liste zeigen; false, wenn alle schon dran waren
+  async function showPhoto() {
+    const p = (CONTENT.photos || [])[state.photo];
+    if (!p) return false;
+    state.photo++;
+    save();
+    await openCard({ type: "photo", icon: "📸", title: "Weißt du noch?", text: p.text, src: p.src }, "Schön ❤️");
+    return true;
+  }
+
   async function land(allowMove) {
     const f = fields[state.pos];
-    if (f.type === "reward") {
+    if (f.type === "cat") {
+      await openCard({ ...f, type: "photo" }, "Schön ❤️");
+    } else if (f.type === "reward") {
       const v = drawVoucher();
       if (v.dice) await voucherCard(v);
       else {
@@ -413,9 +441,8 @@
       await move(LAST);
       await land(false);
     } else if (state.pos === WAIT) {
-      const text = CONTENT.waiting[Math.floor(Math.random() * CONTENT.waiting.length)];
-      state.sack.push({ text, done: false, kind: "wait" });
-      await openCard({ type: "reward", icon: "💋", title: "Trostpreis am Kamin", text }, "In den Gabensack");
+      // Am Kamin: nächstes Foto, sonst einfach weiter aufwärmen
+      if (!(await showPhoto())) await openCard(fields[WAIT]);
     } else {
       await move(Math.min(state.pos + n, WAIT));
       await land(true);

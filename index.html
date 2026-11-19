@@ -40,6 +40,7 @@
       <span><i class="dot milestone"></i>Großes Geschenk</span>
       <span><i class="dot task"></i>Aufgabe</span>
       <span><i class="dot special"></i>Ereignis</span>
+      <span><i class="dot cat"></i>Katzenpost</span>
       <span><i class="dot plain"></i>Ruhefeld</span>
     </section>
 
@@ -69,6 +70,7 @@
     <div class="card-icon" id="cardIcon"></div>
     <p class="card-kind" id="cardKind"></p>
     <h3 id="cardTitle"></h3>
+    <img class="card-photo" id="cardPhoto" alt="" hidden>
     <p id="cardText"></p>
     <div class="die card-die" id="cardDie" hidden>
       <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
@@ -98,6 +100,49 @@
         <stop offset="1" stop-color="#fff" stop-opacity="0"/>
       </linearGradient>
     </defs>
+    <symbol id="princess" viewBox="0 0 60 82">
+      <!-- Haare hinten -->
+      <path d="M12 29 C12 7.5 48 7.5 48 29 L49.5 50 Q45 55 40.5 50 L19.5 50 Q15 55 10.5 50 Z" fill="var(--hair)"/>
+      <!-- Schuhe -->
+      <ellipse cx="24.5" cy="78.5" rx="4" ry="2.4" fill="#c99a2e"/>
+      <ellipse cx="35.5" cy="78.5" rx="4" ry="2.4" fill="#c99a2e"/>
+      <!-- Zauberstab -->
+      <path d="M47 56 L51.5 41" stroke="#f3e2b0" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M52 33 l1.9 3.9 4.3.6 -3.1 3 .7 4.3 -3.8-2 -3.8 2 .7-4.3 -3.1-3 4.3-.6z" fill="#f6cf5a" stroke="#c99a2e" stroke-width=".6" stroke-linejoin="round"/>
+      <!-- Arme -->
+      <path d="M22.5 45 L14 56" stroke="#f7cfa8" stroke-width="4.6" stroke-linecap="round"/>
+      <path d="M37.5 45 L46.5 56" stroke="#f7cfa8" stroke-width="4.6" stroke-linecap="round"/>
+      <!-- Rock -->
+      <path d="M22 51 C11 57 7 69 7 75 Q30 82 53 75 C53 69 49 57 38 51 Z" fill="var(--dress)"/>
+      <path d="M21 58 Q18 67 17.5 76 M30 56 L30 78.5 M39 58 Q42 67 42.5 76" stroke="#fff" stroke-opacity=".28" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+      <path d="M7.5 74.5 Q30 81.5 52.5 74.5" stroke="#fff" stroke-width="4.4" stroke-linecap="round" fill="none"/>
+      <!-- Oberteil, Puffärmel, Gürtel -->
+      <path d="M24 41 L36 41 L38.5 52.5 L21.5 52.5 Z" fill="var(--dress)"/>
+      <path d="M24 41 L36 41 L38.5 52.5 L21.5 52.5 Z" fill="#000" fill-opacity=".14"/>
+      <circle cx="22" cy="44" r="4.8" fill="var(--dress)"/>
+      <circle cx="38" cy="44" r="4.8" fill="var(--dress)"/>
+      <circle cx="20.8" cy="42.8" r="1.6" fill="#fff" fill-opacity=".35"/>
+      <circle cx="36.8" cy="42.8" r="1.6" fill="#fff" fill-opacity=".35"/>
+      <path d="M21.8 51.6 L38.2 51.6" stroke="#f6cf5a" stroke-width="2.6" stroke-linecap="round"/>
+      <!-- Hals und Kopf -->
+      <rect x="27" y="37" width="6" height="6" rx="2" fill="#efbf95"/>
+      <circle cx="30" cy="28" r="13.5" fill="#fbd9b7"/>
+      <!-- Pony -->
+      <path d="M16.2 28 C15.6 8.5 44.4 8.5 43.8 28 C40 21 34.5 19.5 30 23 C25.5 19.5 20 21 16.2 28 Z" fill="var(--hair)"/>
+      <!-- Gesicht -->
+      <ellipse cx="24.8" cy="30.5" rx="1.9" ry="2.6" fill="#2a1d14"/>
+      <ellipse cx="35.2" cy="30.5" rx="1.9" ry="2.6" fill="#2a1d14"/>
+      <circle cx="25.4" cy="29.5" r=".7" fill="#fff"/>
+      <circle cx="35.8" cy="29.5" r=".7" fill="#fff"/>
+      <circle cx="20.8" cy="34.6" r="2.6" fill="#f58aa0" fill-opacity=".6"/>
+      <circle cx="39.2" cy="34.6" r="2.6" fill="#f58aa0" fill-opacity=".6"/>
+      <path d="M27.2 35.4 Q30 38.2 32.8 35.4" stroke="#b5475a" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      <!-- Krone -->
+      <path d="M20.5 16 L18.5 5.5 L25 10.5 L30 2.5 L35 10.5 L41.5 5.5 L39.5 16 Z" fill="#f6cf5a" stroke="#c99a2e" stroke-width=".9" stroke-linejoin="round"/>
+      <circle cx="30" cy="12" r="1.7" fill="#d43a45"/>
+      <circle cx="24.4" cy="13.2" r="1.1" fill="#fff"/>
+      <circle cx="35.6" cy="13.2" r="1.1" fill="#fff"/>
+    </symbol>
     <symbol id="sardine" viewBox="0 0 100 40">
       <path class="tail" d="M16 20 L1 7 Q6 20 1 33 Z" fill="#33627e"/>
       <path d="M46 9 L55 2 L60 8 Z" fill="#33627e"/>

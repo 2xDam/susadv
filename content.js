@@ -1,7 +1,9 @@
 // Hier passt du das Spiel an: Texte, Gutscheine, Geschenke und Aufgaben.
 const CONTENT = {
   title: "Adventsspiel",          // z. B. "Annas Adventsspiel"
-  token: "🦌",                     // Spielfigur
+  // Spielfigur: "prinzessin" ist die gezeichnete Figur, alternativ ein Emoji wie "🦌"
+  token: "prinzessin",
+  princess: { hair: "#7a4a2b", dress: "#ec6fa9" },   // Haar- und Kleidfarbe
 
   // Rote Felder: Gutscheine, die sie bei dir einlösen kann.
   // Landet sie auf einem roten Feld, wird zufällig einer gezogen.
@@ -12,14 +14,20 @@ const CONTENT = {
     { text: "{n} Minuten Rückenmassage", dice: 5 },
     { text: "{n} Minuten Nackenmassage", dice: 5 },
     { text: "{n} Minuten Rückenkraulen", dice: 3 },
-    { text: "{n} Küsse, einzulösen wann immer du willst", dice: 2 },
     { text: "Wir schauen einen Film deiner Wahl" },
-    { text: "Frühstück ans Bett" },
+    { text: "Du schläfst aus, ich übernehme den Morgen und bringe dir Frühstück ans Bett" },
+    { text: "Abendessen ans Bett" },
+    { text: "Spieleabend: Du suchst das Spiel aus, und ich lasse dich nicht absichtlich gewinnen" },
+    { text: "Nein-Joker: Einmal etwas ablehnen, ohne Diskussion", once: true },
+    { text: "Wunsch-Joker: Ich erfülle dir einen (kleinen) Wunsch", once: true },
     { text: "Heute koche ich, du wünschst dir was" },
-    { text: "Eine heiße Schokolade mit Sahne, frisch serviert" },
+    { text: "Wir machen einen Beautyabend, ich besorge alles" },
     { text: "Ein Abend ohne Handy, nur wir zwei" },
     { text: "Wir fahren auf einen Weihnachtsmarkt und ich bezahle das Essen", once: true },
     { text: "Du darfst dir eine Pflanze aussuchen", once: true },
+    { text: "Wir gehen zusammen Schlittschuhlaufen", once: true },
+    { text: "Kinoabend: Film nach deinem Wunsch, ich zahle die Tickets", once: true },
+    { text: "Essen bestellen: Du suchst aus, ich zahle", once: true },
   ],
 
   // Meilensteine: Diese Geschenke gibt es der Reihe nach, sobald sie an einem
@@ -49,15 +57,30 @@ const CONTENT = {
     "Denk dir einen Rentiernamen für mich aus",
   ],
 
-  // Wartefeld vor dem Ziel: kleine Trostpreise, falls sie früh ankommt
-  waiting: [
-    "Ein Kuss, sofort einzulösen",
-    "Eine lange Umarmung",
-    "Ein Plätzchen deiner Wahl",
-    "Ein ehrliches Kompliment von mir",
-    "5 Minuten Kraulen, sofort",
-    "Ich singe dir ein Weihnachtslied vor",
-    "Ein Tee oder Kakao, von mir gebracht",
+  // Fotos am Kamin: Jeder Wurf auf dem Wartefeld vor Heiligabend zeigt das nächste.
+  // Reihenfolge = Reihenfolge hier. Bilder liegen im Ordner photos/.
+  photos: [
+    { src: "photos/7.jpg", text: "Eingemummelt im Nebelwald." },
+    { src: "photos/2.jpg", text: "Dieser Blick sagt mehr als tausend Worte. 😄" },
+    { src: "photos/8.jpg", text: "Der kleine Kerl mit dem Hut hat uns beide um den Rüssel gewickelt." },
+    { src: "photos/1.jpg", text: "Schick gemacht für einen schönen Abend zu zweit." },
+    { src: "photos/6.jpg", text: "Kuscheln unter der Lichterkette, zu dritt." },
+    { src: "photos/5.jpg", text: "Der schönste Tag." },
+  ],
+
+  // Katzenfotos: Liegen fest auf Ruhefeldern, gleichmäßig übers Brett verteilt,
+  // und sind dort als kleines Bild zu sehen. Landet sie darauf, gibt es das Foto groß.
+  // Reihenfolge hier = Reihenfolge auf dem Brett. Vorschaubilder in photos/thumbs/.
+  catPhotos: [
+    { src: "photos/13.jpg", text: "So klein hat alles angefangen." },
+    { src: "photos/3.jpg", text: "Wer schaut denn da so lieb?" },
+    { src: "photos/14.jpg", text: "Eingekuschelt und bereit für den Winter." },
+    { src: "photos/11.jpg", text: "Dazu gibt es eine sehr klare Meinung." },
+    { src: "photos/4.jpg", text: "Frisur sitzt." },
+    { src: "photos/12.jpg", text: "Sommer, Sonne, Gartenkatze." },
+    { src: "photos/15.jpg", text: "Einer schläft, die Katze passt auf." },
+    { src: "photos/10.jpg", text: "Und das hier ist die Meinung zum Thema Privatsphäre." },
+    { src: "photos/9.jpg", text: "Die zwei Lieblinge." },
   ],
 
   // Heiligabend: Der letzte Wurf landet immer hier, vorher ist das Feld unerreichbar.
