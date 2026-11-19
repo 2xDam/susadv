@@ -91,5 +91,5 @@ const CONTENT = {
   ],
 
   // Heiligabend: Der letzte Wurf landet immer hier, vorher ist das Feld unerreichbar.
-  goal: "Frohe Weihnachten! Der Würfel hat heute nur eine Richtung gekannt. Unterm Baum wartet etwas Kuscheliges auf dich, das normalerweise dicht gedrängt in einer Dose wohnt 🐟",
+  goal: "Frohe Weihnachten! Der Würfel hat heute nur eine Richtung gekannt. Heute wartet etwas Kuscheliges auf dich, das normalerweise dicht gedrängt in einer Dose wohnt 🐟",
 };

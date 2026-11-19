@@ -22,7 +22,7 @@
   for (let i = 0; i <= LAST; i++) {
     if (i === 0) fields.push({ type: "start", icon: "🏠" });
     else if (i === LAST) fields.push({ type: "goal", icon: "🎄", title: "JACKPOT!", text: CONTENT.goal });
-    else if (i === WAIT) fields.push({ type: "wait", icon: "🏁", title: "Schon am Ziel!", text: "Du hast das Ziel bereits erreicht, wir wissen ja, dass du Würfelglück hast 😉 Ab jetzt gibt es hier jeden Tag eine kleine Überraschung, bis dich an Heiligabend dein letzter Wurf zum Baum bringt." });
+    else if (i === WAIT) fields.push({ type: "wait", icon: "🏁", title: "Schon am Ziel!", text: "Du hast das Ziel bereits erreicht, wir wissen ja, dass du Würfelglück hast 😉 Ab jetzt gibt es hier jeden Tag eine kleine Überraschung, bis dich an Heiligabend dein letzter Wurf zum Jackpot bringt." });
     else if (i % 6 === 0) fields.push({ type: "special", ...SPECIALS[s++ % SPECIALS.length] });
     else if (i % 6 === 2 || i % 6 === 5) fields.push({ type: "reward", icon: "🎁", title: "Gutschein" });
     else if (i % 6 === 3) fields.push({ type: "task", icon: "⭐", title: "Aufgabe" });
