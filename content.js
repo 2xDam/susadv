@@ -72,7 +72,7 @@ const CONTENT = {
     { src: "photos/8.jpg", text: "Der kleine Kerl mit dem Hut hat uns beide um den Rüssel gewickelt." },
     { src: "photos/1.jpg", text: "Schick gemacht für einen schönen Abend zu zweit." },
     { src: "photos/6.jpg", text: "Kuscheln unter der Lichterkette, zu dritt." },
-    { src: "photos/5.jpg", text: "Der schönste Tag." },
+    { src: "photos/5.jpg", text: "Ein kleiner Vorgeschmack darauf, wie toll wir mal aussehen werden 😍" },
   ],
 
   // Katzenfotos: Liegen fest auf Ruhefeldern, gleichmäßig übers Brett verteilt,
@@ -91,5 +91,5 @@ const CONTENT = {
   ],
 
   // Heiligabend: Der letzte Wurf landet immer hier, vorher ist das Feld unerreichbar.
-  goal: "Frohe Weihnachten! Der Würfel hat heute nur eine Richtung gekannt. Dein großes Geschenk wartet unterm Baum.",
+  goal: "Frohe Weihnachten! Der Würfel hat heute nur eine Richtung gekannt. Unterm Baum wartet etwas Kuscheliges auf dich, das normalerweise dicht gedrängt in einer Dose wohnt 🐟",
 };
