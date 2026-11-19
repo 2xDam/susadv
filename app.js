@@ -45,7 +45,7 @@
   const rest = fields.map((f, i) => (f.type === "plain" ? i : -1)).filter((i) => i > 0);
   cats.slice(0, rest.length).forEach((p, k) => {
     const i = rest[Math.floor(((k + 0.5) * rest.length) / Math.min(cats.length, rest.length))];
-    fields[i] = { type: "cat", icon: "🐾", title: "Grüße von Enno 🐾", text: p.text, src: p.src };
+    fields[i] = { type: "cat", icon: "🐾", title: p.title || "Grüße von Enno 🐾", text: p.text, src: p.src };
   });
 
   // ---------- Spielstand ----------

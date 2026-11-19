@@ -72,7 +72,7 @@ const CONTENT = {
   // und sind dort als kleines Bild zu sehen. Landet sie darauf, gibt es das Foto groß.
   // Reihenfolge hier = Reihenfolge auf dem Brett. Vorschaubilder in photos/thumbs/.
   catPhotos: [
-    { src: "photos/13.jpg", text: "Heute leider kein Gewinn, dafür aber schöne Grüße von Enno :) So klein hat alles angefangen." },
+    { src: "photos/13.jpg", title: "Grüße von Ennos Kindern 🐾", text: "Waren wir nicht süß? Schöne Weihnachtszeit auch von uns!" },
     { src: "photos/3.jpg", text: "Enno schaut vorbei und fragt, ob du heute schon gekuschelt hast." },
     { src: "photos/14.jpg", text: "Enno ist eingekuschelt und bereit für den Winter. Schöne Grüße!" },
     { src: "photos/11.jpg", text: "Enno hat zu diesem Feld eine sehr klare Meinung." },
