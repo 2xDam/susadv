@@ -34,7 +34,7 @@ const CONTENT = {
   // 🎀-Feld vorbeizieht. Alle sind garantiert, nur der Tag ist eine Überraschung.
   // So viele Einträge wie hier stehen, so viele 🎀-Felder hat das Brett.
   bigGifts: [
-    "Gesichtsmasken für einen Wellnessabend",
+    "Körperlotion",   // vorläufig, kommt noch
     "Riechdosen",
     "Tigerbalm",
     "Peeling",
