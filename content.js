@@ -43,18 +43,9 @@ const CONTENT = {
 
   // Grüne Felder: kleine Aufgaben
   tasks: [
-    "Sing mir die erste Strophe deines liebsten Weihnachtslieds vor",
-    "Mach ein Selfie mit Weihnachtsmütze und schick es mir",
     "Nenne drei Dinge, die du dieses Jahr besonders schön fandest",
     "Male in zwei Minuten einen Weihnachtsmann, ohne den Stift abzusetzen",
-    "Erzähl mir deine schönste Weihnachtserinnerung aus der Kindheit",
-    "Tanze 30 Sekunden zu „Last Christmas“",
-    "Schreib mir einen Wunschzettel mit genau drei Wünschen",
-    "Gib mir einen Kuss unter dem (gedachten) Mistelzweig",
-    "Errate in drei Versuchen, was ich mir zu Weihnachten wünsche",
-    "Sag „Fischers Fritz fischt frische Fische“ dreimal fehlerfrei",
-    "Bastle einen Papierstern und häng ihn auf",
-    "Denk dir einen Rentiernamen für mich aus",
+    "Tanze zu „Last Christmas“ und sing dabei mit",
   ],
 
   // Lila Quizfelder ❓: Fragen über uns. Die ERSTE Antwort ist immer die richtige,

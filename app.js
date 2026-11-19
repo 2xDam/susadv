@@ -18,14 +18,14 @@
   ];
 
   const fields = [];
-  let t = 0, s = 0;
+  let s = 0;
   for (let i = 0; i <= LAST; i++) {
     if (i === 0) fields.push({ type: "start", icon: "🏠" });
     else if (i === LAST) fields.push({ type: "goal", icon: "🎄", title: "JACKPOT!", text: CONTENT.goal });
     else if (i === WAIT) fields.push({ type: "wait", icon: "🔥", title: "Am Kamin", text: "Du bist fast da. Hier wärmst du dich auf, bis an Heiligabend dein letzter Wurf dich zum Baum bringt." });
     else if (i % 6 === 0) fields.push({ type: "special", ...SPECIALS[s++ % SPECIALS.length] });
     else if (i % 6 === 2 || i % 6 === 5) fields.push({ type: "reward", icon: "🎁", title: "Gutschein" });
-    else if (i % 6 === 3) fields.push({ type: "task", icon: "⭐", title: "Aufgabe", text: CONTENT.tasks[t++ % CONTENT.tasks.length] });
+    else if (i % 6 === 3) fields.push({ type: "task", icon: "⭐", title: "Aufgabe" });
     else fields.push({ type: "plain", icon: "❄️" });
   }
 
@@ -48,6 +48,9 @@
     const i = taskCells[Math.floor(((k + 0.5) * taskCells.length) / nQuiz)];
     fields[i] = { type: "quiz", icon: "❓", title: "Quizfrage", ...quiz[k] };
   }
+  // Aufgaben der Reihe nach auf die übrig gebliebenen Aufgabenfelder
+  let t = 0;
+  fields.forEach((f) => { if (f.type === "task") f.text = CONTENT.tasks[t++ % CONTENT.tasks.length]; });
 
   // Katzenfotos gleichmäßig auf die übrigen Ruhefelder legen
   const cats = CONTENT.catPhotos || [];
