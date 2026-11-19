@@ -1,6 +1,6 @@
 // Hier passt du das Spiel an: Texte, Gutscheine, Geschenke und Aufgaben.
 const CONTENT = {
-  title: "Adventsspiel",          // z. B. "Annas Adventsspiel"
+  title: "Susens Adventsrennen",          // z. B. "Annas Adventsspiel"
   // Spielfigur: "prinzessin" ist die gezeichnete Figur, alternativ ein Emoji wie "🦌"
   token: "prinzessin",
   princess: { hair: "#7a4a2b", dress: "#ec6fa9" },   // Haar- und Kleidfarbe
