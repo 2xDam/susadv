@@ -110,6 +110,7 @@ main { position: relative; z-index: 1; }
   background: linear-gradient(160deg, #fff, #f0e4c4);
   outline: 2px solid var(--gold); outline-offset: 2px;
 }
+.cell.quiz { background: linear-gradient(160deg, #a98be0, #5b3f9e); color: #fff; }
 .cell.milestone { background: linear-gradient(160deg, #a9dcf5, #3b7cae); color: #fff; }
 .cell.cat { background: #fff; }
 .cell.cat .thumb { position: absolute; inset: 3px; width: calc(100% - 6px); height: calc(100% - 6px); object-fit: cover; border-radius: 13px; }
@@ -164,6 +165,7 @@ main { position: relative; z-index: 1; }
 .dot.task { background: var(--pine); }
 .dot.special { background: var(--gold); }
 .dot.plain { background: var(--cream); }
+.dot.quiz { background: #7b5cc4; }
 .dot.milestone { background: #5ea3d1; }
 .dot.cat { background: #e08a3c; }
 
@@ -376,3 +378,17 @@ main { position: relative; z-index: 1; }
   .snow { display: none; }
   .token, .card[open], .die, .die.pop, .token.hop span, .cell.goal, .sardine svg { animation: none; transition: none; }
 }
+
+/* Quiz */
+.card.quiz .card-kind { color: #5b3f9e; }
+.quiz-answers { display: grid; gap: 8px; margin: -6px 0 18px; }
+.quiz-answers[hidden] { display: none; }
+.card .quiz-answers button {
+  font-size: 16px; font-weight: 600; padding: 11px 14px;
+  color: var(--ink); background: #fff;
+  border: 2px solid #e3d6b8; box-shadow: none;
+  transition: background .3s, border-color .3s, opacity .3s;
+}
+.card .quiz-answers button:disabled { cursor: default; opacity: .55; }
+.card .quiz-answers button.right { opacity: 1; background: #d9f2e3; border-color: #2c8a61; }
+.card .quiz-answers button.wrong { opacity: 1; background: #f8d9db; border-color: var(--berry); }

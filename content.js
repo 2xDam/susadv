@@ -57,6 +57,21 @@ const CONTENT = {
     "Denk dir einen Rentiernamen für mich aus",
   ],
 
+  // Lila Quizfelder ❓: Fragen über uns. Die ERSTE Antwort ist immer die richtige,
+  // im Spiel werden sie gemischt. Richtig = 2 Felder vor. note ist optional.
+  // Bis zu 9 Fragen, sie ersetzen einen Teil der grünen Aufgabenfelder.
+  quiz: [
+    { q: "Wo war unser erstes Date?", answers: ["Rees", "Emmerich", "Wesel"] },
+    { q: "Was haben wir beim ersten Treffen getrunken?", answers: ["4bro", "Bratee", "Dirtea"] },
+    { q: "Wer hat zuerst „Ich liebe dich“ gesagt?", answers: ["Damian", "Susen"], note: "„Ich muss dir was sagen :D“" },
+    { q: "Seit wann sind wir offiziell zusammen?", answers: ["28.09.21", "21.09.21", "28.10.21"] },
+    { q: "Wie lautet Ennos offizieller Name, nicht abgekürzt?", answers: ["nomen nominandum", "no name", "noch nichts"] },
+    { q: "Wo haben wir die Elefanten getroffen?", answers: ["Takua Pa", "Mau Dok", "Hak Tua"] },
+    { q: "Wie heißt der Nebelwald auf Madeira?", answers: ["Fanal-Forest", "Fog-Forest", "Funchal-Forest"] },
+    { q: "An welchem Tag haben wir uns verlobt?", answers: ["18.01.26", "15.01.26", "11.01.26"] },
+    { q: "Was ist mein Lieblingsessen?", answers: ["Buchweizenpfannkuchen", "du", "Thai-Curry"] },
+  ],
+
   // Fotos am Kamin: Jeder Wurf auf dem Wartefeld vor Heiligabend zeigt das nächste.
   // Reihenfolge = Reihenfolge hier. Bilder liegen im Ordner photos/.
   photos: [

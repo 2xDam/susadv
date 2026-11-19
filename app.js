@@ -40,6 +40,15 @@
     if (best > 0) fields[best] = { type: "milestone", icon: "🎀", title: "Großes Geschenk!" };
   }
 
+  // Quizfragen gleichmäßig auf einen Teil der Aufgabenfelder legen
+  const quiz = CONTENT.quiz || [];
+  const taskCells = fields.map((f, i) => (f.type === "task" ? i : -1)).filter((i) => i > 0);
+  const nQuiz = Math.min(quiz.length, Math.max(0, taskCells.length - 3));
+  for (let k = 0; k < nQuiz; k++) {
+    const i = taskCells[Math.floor(((k + 0.5) * taskCells.length) / nQuiz)];
+    fields[i] = { type: "quiz", icon: "❓", title: "Quizfrage", ...quiz[k] };
+  }
+
   // Katzenfotos gleichmäßig auf die übrigen Ruhefelder legen
   const cats = CONTENT.catPhotos || [];
   const rest = fields.map((f, i) => (f.type === "plain" ? i : -1)).filter((i) => i > 0);
@@ -251,7 +260,7 @@
   }
 
   // ---------- Karte ----------
-  const KIND = { reward: "Gutschein", task: "Aufgabe", special: "Ereignis", milestone: "Meilenstein", wait: "Fast geschafft", goal: "Heiligabend", photo: "Erinnerung" };
+  const KIND = { quiz: "Wie gut kennst du uns?", reward: "Gutschein", task: "Aufgabe", special: "Ereignis", milestone: "Meilenstein", wait: "Fast geschafft", goal: "Heiligabend", photo: "Erinnerung" };
   const card = $("card"), cardDie = $("cardDie");
   let cardAction = null;   // solange gesetzt, führt der Knopf eine Aktion aus statt zu schließen
   let typing = null;       // läuft gerade die Schreibmaschine?
@@ -297,6 +306,9 @@
     $("cardTitle").textContent = f.title;
     okBtn.textContent = okLabel || "Weiter";
     cardDie.hidden = true;
+    okBtn.hidden = false;
+    quizBox.hidden = true;
+    quizBox.replaceChildren();
     const photo = $("cardPhoto");
     photo.hidden = !f.src;
     if (f.src) photo.src = f.src; else photo.removeAttribute("src");
@@ -329,6 +341,48 @@
     if (typing) typing.skip();
     else if (!cardAction) closeCard();
   });
+
+  // Quiz: Frage tippen, Antworten gemischt zeigen. Liefert true bei richtiger Antwort.
+  const quizBox = $("quizAnswers");
+  function quizCard(f) {
+    const closed = openCard({ ...f, text: f.q }, "Weiter");
+    okBtn.hidden = true;
+    cardAction = () => {};              // erst antworten, dann geht es weiter
+    const opts = f.answers.map((a, i) => ({ a, ok: i === 0 }));
+    for (let i = opts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    let right = false;
+    closed.typed.then(() => {
+      opts.forEach((o) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = o.a;
+        b.onclick = (e) => {
+          e.stopPropagation();
+          if (quizBox.dataset.done) return;
+          quizBox.dataset.done = "1";
+          right = o.ok;
+          [...quizBox.children].forEach((x, k) => {
+            x.disabled = true;
+            if (opts[k].ok) x.classList.add("right");
+          });
+          if (!o.ok) b.classList.add("wrong");
+          const note = document.createElement("small");
+          note.textContent = (o.ok ? "Richtig! 🎉 " : `Leider nicht. Richtig ist: ${f.answers[0]}. `) + (f.note || "");
+          cardText.appendChild(note);
+          okBtn.textContent = o.ok ? "2 Felder vor 🎉" : "Weiter";
+          okBtn.hidden = false;
+          cardAction = null;
+        };
+        quizBox.appendChild(b);
+      });
+      delete quizBox.dataset.done;
+      quizBox.hidden = false;
+    });
+    return closed.then(() => right);
+  }
 
   // Gutschein mit Würfel: erst würfeln, dann wandert er in den Sack
   function voucherCard(v) {
@@ -400,7 +454,12 @@
 
   async function land(allowMove) {
     const f = fields[state.pos];
-    if (f.type === "cat") {
+    if (f.type === "quiz") {
+      if (await quizCard(f)) {
+        await move(Math.min(state.pos + 2, WAIT));
+        await land(false);
+      }
+    } else if (f.type === "cat") {
       await openCard({ ...f, type: "photo" }, "Schön ❤️");
     } else if (f.type === "reward") {
       const v = drawVoucher();
