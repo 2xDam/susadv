@@ -30,7 +30,7 @@ const CONTENT = {
     { text: "Essen bestellen: Du suchst aus, ich zahle", once: true },
   ],
 
-  // Meilensteine: Diese Geschenke gibt es der Reihe nach, sobald sie an einem
+  // Wohlfühl-Bonus (🎀): Diese Geschenke gibt es der Reihe nach, sobald sie an einem
   // 🎀-Feld vorbeizieht. Alle sind garantiert, nur der Tag ist eine Überraschung.
   // So viele Einträge wie hier stehen, so viele 🎀-Felder hat das Brett.
   bigGifts: [
@@ -63,7 +63,8 @@ const CONTENT = {
     { q: "Was ist mein Lieblingsessen?", answers: ["Buchweizenpfannkuchen", "du", "Thai-Curry"] },
   ],
 
-  // Fotos am Kamin: Jeder Wurf auf dem Wartefeld vor Heiligabend zeigt das nächste.
+  // Fotos am Ziel: Ist sie vor Heiligabend schon am Wartefeld, gibt es dort pro Wurf
+  // erst offene Quizfragen (danach je ein Foto von hier), dann offene Aufgaben.
   // Reihenfolge = Reihenfolge hier. Bilder liegen im Ordner photos/.
   photos: [
     { src: "photos/7.jpg", text: "Eingemummelt im Nebelwald." },

@@ -22,7 +22,7 @@
   for (let i = 0; i <= LAST; i++) {
     if (i === 0) fields.push({ type: "start", icon: "🏠" });
     else if (i === LAST) fields.push({ type: "goal", icon: "🎄", title: "JACKPOT!", text: CONTENT.goal });
-    else if (i === WAIT) fields.push({ type: "wait", icon: "🔥", title: "Am Kamin", text: "Du bist fast da. Hier wärmst du dich auf, bis an Heiligabend dein letzter Wurf dich zum Baum bringt." });
+    else if (i === WAIT) fields.push({ type: "wait", icon: "🔥", title: "Schon am Ziel!", text: "Du hast das Ziel bereits erreicht, wir wissen ja, dass du Würfelglück hast 😉 Ab jetzt gibt es hier jeden Tag eine kleine Überraschung, bis dich an Heiligabend dein letzter Wurf zum Baum bringt." });
     else if (i % 6 === 0) fields.push({ type: "special", ...SPECIALS[s++ % SPECIALS.length] });
     else if (i % 6 === 2 || i % 6 === 5) fields.push({ type: "reward", icon: "🎁", title: "Gutschein" });
     else if (i % 6 === 3) fields.push({ type: "task", icon: "⭐", title: "Aufgabe" });
@@ -37,7 +37,7 @@
     fields.forEach((f, i) => {
       if (f.type === "plain" && (best < 0 || Math.abs(i - ideal) < Math.abs(best - ideal))) best = i;
     });
-    if (best > 0) fields[best] = { type: "milestone", icon: "🎀", title: "Großes Geschenk!" };
+    if (best > 0) fields[best] = { type: "milestone", icon: "🎀", title: "Wohlfühl-Bonus!" };
   }
 
   // Quizfragen gleichmäßig auf einen Teil der Aufgabenfelder legen
@@ -46,11 +46,11 @@
   const nQuiz = Math.min(quiz.length, Math.max(0, taskCells.length - 3));
   for (let k = 0; k < nQuiz; k++) {
     const i = taskCells[Math.floor(((k + 0.5) * taskCells.length) / nQuiz)];
-    fields[i] = { type: "quiz", icon: "❓", title: "Quizfrage", ...quiz[k] };
+    fields[i] = { type: "quiz", icon: "❓", title: "Quizfrage", qi: k, ...quiz[k] };
   }
   // Aufgaben der Reihe nach auf die übrig gebliebenen Aufgabenfelder
   let t = 0;
-  fields.forEach((f) => { if (f.type === "task") f.text = CONTENT.tasks[t++ % CONTENT.tasks.length]; });
+  fields.forEach((f) => { if (f.type === "task") { f.ti = t++ % CONTENT.tasks.length; f.text = CONTENT.tasks[f.ti]; } });
 
   // Katzenfotos gleichmäßig auf die übrigen Ruhefelder legen
   const cats = CONTENT.catPhotos || [];
@@ -61,7 +61,7 @@
   });
 
   // ---------- Spielstand ----------
-  const fresh = () => ({ pos: 0, rolls: 0, bonus: 0, seen: [0], sack: [], big: 0, got: [], bag: [], onceWon: [], photo: 0 });
+  const fresh = () => ({ pos: 0, rolls: 0, bonus: 0, seen: [0], sack: [], big: 0, got: [], bag: [], onceWon: [], photo: 0, asked: [], tasksDone: [] });
   let state = fresh();
   try { state = { ...fresh(), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch (e) { /* ohne Speicher spielbar */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignorieren */ } };
@@ -263,7 +263,7 @@
   }
 
   // ---------- Karte ----------
-  const KIND = { quiz: "Wie gut kennst du uns?", reward: "Gutschein", task: "Aufgabe", special: "Ereignis", milestone: "Meilenstein", wait: "Fast geschafft", goal: "Heiligabend", photo: "Erinnerung" };
+  const KIND = { quiz: "Wie gut kennst du uns?", reward: "Gutschein", task: "Aufgabe", special: "Ereignis", milestone: "Für dich", wait: "Fast geschafft", goal: "Heiligabend", photo: "Erinnerung" };
   const card = $("card"), cardDie = $("cardDie");
   let cardAction = null;   // solange gesetzt, führt der Knopf eine Aktion aus statt zu schließen
   let typing = null;       // läuft gerade die Schreibmaschine?
@@ -347,7 +347,7 @@
 
   // Quiz: Frage tippen, Antworten gemischt zeigen. Liefert true bei richtiger Antwort.
   const quizBox = $("quizAnswers");
-  function quizCard(f) {
+  function quizCard(f, bonus = true) {
     const closed = openCard({ ...f, text: f.q }, "Weiter");
     okBtn.hidden = true;
     cardAction = () => {};              // erst antworten, dann geht es weiter
@@ -375,7 +375,7 @@
           const note = document.createElement("small");
           note.textContent = (o.ok ? "Richtig! 🎉 " : `Leider nicht. Richtig ist: ${f.answers[0]}. `) + (f.note || "");
           cardText.appendChild(note);
-          okBtn.textContent = o.ok ? "2 Felder vor 🎉" : "Weiter";
+          okBtn.textContent = o.ok && bonus ? "2 Felder vor 🎉" : "Weiter";
           okBtn.hidden = false;
           cardAction = null;
         };
@@ -436,7 +436,7 @@
       const text = CONTENT.bigGifts[state.big++] || "Ein Überraschungsgeschenk";
       state.sack.push({ text, done: false, kind: "big" });
       save(); render();
-      await openCard({ type: "milestone", icon: "🎀", title: "Großes Geschenk!", text }, "In den Gabensack");
+      await openCard({ type: "milestone", icon: "🎀", title: "Wohlfühl-Bonus!", text }, "In den Gabensack");
     }
   }
 
@@ -455,9 +455,33 @@
     return true;
   }
 
+  // Am Ziel vor Heiligabend: erst offene Quizfragen (danach ein Foto),
+  // dann offene Aufgaben, dann übrige Fotos, sonst nur die Ziel-Karte
+  async function atFireplace() {
+    const quiz = CONTENT.quiz || [];
+    const qi = quiz.findIndex((_, i) => !state.asked.includes(i));
+    if (qi >= 0) {
+      state.asked.push(qi);
+      save();
+      await quizCard({ type: "quiz", icon: "❓", title: "Quizfrage", ...quiz[qi] }, false);
+      await showPhoto();
+      return;
+    }
+    const ti = CONTENT.tasks.findIndex((_, i) => !state.tasksDone.includes(i));
+    if (ti >= 0) {
+      state.tasksDone.push(ti);
+      save();
+      await openCard({ type: "task", icon: "⭐", title: "Aufgabe", text: CONTENT.tasks[ti] }, "Erledigt!");
+      return;
+    }
+    if (!(await showPhoto())) await openCard(fields[WAIT]);
+  }
+
   async function land(allowMove) {
     const f = fields[state.pos];
     if (f.type === "quiz") {
+      if (!state.asked.includes(f.qi)) state.asked.push(f.qi);
+      save();
       if (await quizCard(f)) {
         await move(Math.min(state.pos + 2, WAIT));
         await land(false);
@@ -473,6 +497,8 @@
         await openCard({ ...f, text: v.text }, "In den Gabensack");
       }
     } else if (f.type === "task") {
+      if (!state.tasksDone.includes(f.ti)) state.tasksDone.push(f.ti);
+      save();
       await openCard(f, "Erledigt!");
     } else if (f.type === "special" && allowMove) {
       await openCard(f);
@@ -503,8 +529,7 @@
       await move(LAST);
       await land(false);
     } else if (state.pos === WAIT) {
-      // Am Kamin: nächstes Foto, sonst einfach weiter aufwärmen
-      if (!(await showPhoto())) await openCard(fields[WAIT]);
+      await atFireplace();
     } else {
       await move(Math.min(state.pos + n, WAIT));
       await land(true);
